@@ -46,7 +46,13 @@ async function fetchJSON<T>(url: URL, signal: AbortSignal | undefined, timeoutMs
     if (timeout.aborted) throw new OpenMeteoError(`天气服务请求超时（${timeoutMs / 1000}s）`, true)
     throw new OpenMeteoError(`无法连接天气服务：${(err as Error).message}`, true)
   }
-  const body = (await res.json().catch(() => null)) as (T & { error?: boolean; reason?: string }) | null
+  let body: (T & { error?: boolean; reason?: string }) | null = null
+  try {
+    body = await res.json()
+  } catch {
+    if (signal?.aborted) throw new OpenMeteoError('请求已取消')
+    if (timeout.aborted) throw new OpenMeteoError(`天气服务请求超时（${timeoutMs / 1000}s）`, true)
+  }
   if (!res.ok || !body || body.error) {
     throw new OpenMeteoError(
       `天气服务返回错误（HTTP ${res.status}）${body?.reason ? `：${body.reason}` : ''}`,
