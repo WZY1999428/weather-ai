@@ -99,6 +99,7 @@ export const useChatStore = defineStore('chat', () => {
 
   function handleEvent(e: AgentEvent): void {
     switch (e.type) {
+      case 'user-message':
       case 'assistant-start':
         upsertMessage(e.message)
         break

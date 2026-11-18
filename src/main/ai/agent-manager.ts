@@ -55,6 +55,8 @@ export class AgentManager {
     const conv = this.conversations.get(conversationId)
     if (!conv) throw new Error('会话不存在')
     const msg = this.conversations.addMessage({ conversationId, role: 'user', content })
+    // 先于本轮的 assistant 事件推送，保证 Renderer 中消息顺序正确
+    emit({ type: 'user-message', conversationId, message: msg })
     if (conv.title === DEFAULT_TITLE) {
       const title = content.replace(/\s+/g, ' ').trim().slice(0, 24) || DEFAULT_TITLE
       emit({ type: 'conversation-updated', conversation: this.conversations.rename(conversationId, title) })

@@ -100,6 +100,7 @@ export interface AppInfo {
 }
 
 export type AgentEvent =
+  | { type: 'user-message'; conversationId: string; message: ChatMessage }
   | { type: 'assistant-start'; requestId: string; conversationId: string; message: ChatMessage }
   | { type: 'assistant-delta'; requestId: string; conversationId: string; messageId: string; delta: string }
   | { type: 'assistant-end'; requestId: string; conversationId: string; message: ChatMessage }
