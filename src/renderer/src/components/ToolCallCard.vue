@@ -57,10 +57,10 @@ const pretty = (v: unknown): string => (typeof v === 'string' ? v : JSON.stringi
 .tool-card.failed { border-left-color: #f56c6c; }
 .head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; cursor: pointer; user-select: none; }
 .dot { display: inline-flex; width: 14px; color: #e6a23c; }
-.label { color: var(--wa-muted); }
-.name { font-family: Consolas, monospace; font-weight: 600; color: var(--wa-text); }
-.dur { color: var(--wa-muted); font-size: 12px; }
-.toggle { margin-left: auto; color: var(--wa-primary); font-size: 12px; }
+.label { color: var(--wa-muted); white-space: nowrap; flex-shrink: 0; }
+.name { font-family: Consolas, monospace; font-weight: 600; color: var(--wa-text); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dur { color: var(--wa-muted); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+.toggle { margin-left: auto; color: var(--wa-primary); font-size: 12px; white-space: nowrap; flex-shrink: 0; }
 .body { padding: 0 10px 10px; }
 .desc { color: #606266; margin-bottom: 6px; }
 .section { font-size: 12px; color: var(--wa-muted); margin: 8px 0 4px; }
