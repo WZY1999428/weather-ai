@@ -30,7 +30,7 @@ const time = (iso: string): string => iso.split('T')[1] ?? iso
       <span class="sub">获取于 {{ new Date(data.fetchedAt).toLocaleString('zh-CN', { hour12: false }) }} · Open-Meteo</span>
     </div>
     <div class="days">
-      <div v-for="(d, i) in data.days" :key="d.date" class="day">
+      <div v-for="d in data.days" :key="d.date" class="day">
         <div class="wd">{{ weekday(d.date) }}</div>
         <div class="date">{{ d.date.slice(5) }}</div>
         <div class="icon">{{ weatherCodeIcon(d.weatherCode) }}</div>
