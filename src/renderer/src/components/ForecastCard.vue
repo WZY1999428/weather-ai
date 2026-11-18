@@ -10,9 +10,14 @@ const place = computed(() =>
     ? [props.data.location.name, props.data.location.admin1].filter(Boolean).join(' · ')
     : `${props.data.latitude.toFixed(2)}, ${props.data.longitude.toFixed(2)}`
 )
-const weekday = (date: string, i: number): string => {
-  if (i === 0) return '今天'
-  if (i === 1) return '明天'
+const localDate = (offsetDays: number): string => {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+const weekday = (date: string): string => {
+  if (date === localDate(0)) return '今天'
+  if (date === localDate(1)) return '明天'
   return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][new Date(`${date}T00:00:00`).getDay()]
 }
 const time = (iso: string): string => iso.split('T')[1] ?? iso
@@ -26,7 +31,7 @@ const time = (iso: string): string => iso.split('T')[1] ?? iso
     </div>
     <div class="days">
       <div v-for="(d, i) in data.days" :key="d.date" class="day">
-        <div class="wd">{{ weekday(d.date, i) }}</div>
+        <div class="wd">{{ weekday(d.date) }}</div>
         <div class="date">{{ d.date.slice(5) }}</div>
         <div class="icon">{{ weatherCodeIcon(d.weatherCode) }}</div>
         <div class="desc">{{ d.weather }}</div>
