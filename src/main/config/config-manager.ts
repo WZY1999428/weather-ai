@@ -100,7 +100,7 @@ export class ConfigManager {
       ai: {
         ...this.getAI(),
         hasApiKey: key.length > 0,
-        apiKeyMasked: key ? `${key.slice(0, 3)}${'*'.repeat(8)}${key.slice(-4)}` : ''
+        apiKeyMasked: maskKey(key)
       },
       weather: this.getWeather(),
       app: this.getApp()
@@ -138,4 +138,10 @@ export class ConfigManager {
     this.save()
     return this.getPublic()
   }
+}
+
+function maskKey(key: string): string {
+  if (!key) return ''
+  if (key.length < 12) return '*'.repeat(8)
+  return `${key.slice(0, 3)}${'*'.repeat(8)}${key.slice(-4)}`
 }
