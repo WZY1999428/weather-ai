@@ -111,7 +111,7 @@ export class ConfigManager {
   static mergeAI(base: AIConfig, update?: Partial<AIConfig>): AIConfig {
     const merged = { ...base }
     if (!update) return merged
-    if (typeof update.baseURL === 'string' && update.baseURL.trim()) merged.baseURL = update.baseURL.trim().replace(/\/+$/, '')
+    if (typeof update.baseURL === 'string' && update.baseURL.trim()) merged.baseURL = validateBaseURL(update.baseURL)
     if (typeof update.model === 'string' && update.model.trim()) merged.model = update.model.trim()
     if (typeof update.temperature === 'number' && Number.isFinite(update.temperature)) merged.temperature = clamp(update.temperature, 0, 2)
     if (typeof update.maxTokens === 'number' && Number.isFinite(update.maxTokens)) merged.maxTokens = Math.round(clamp(update.maxTokens, 1, 8192))
@@ -144,4 +144,19 @@ function maskKey(key: string): string {
   if (!key) return ''
   if (key.length < 12) return '*'.repeat(8)
   return `${key.slice(0, 3)}${'*'.repeat(8)}${key.slice(-4)}`
+}
+
+const LOOPBACK = new Set(['localhost', '127.0.0.1', '[::1]'])
+
+/** 只允许 HTTPS；HTTP 仅限本机地址（本地兼容服务），避免 API Key 明文传输。 */
+function validateBaseURL(input: string): string {
+  const value = input.trim().replace(/\/+$/, '')
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    throw new Error('Base URL 格式无效')
+  }
+  if (url.protocol === 'https:' || (url.protocol === 'http:' && LOOPBACK.has(url.hostname))) return value
+  throw new Error('Base URL 必须使用 HTTPS（HTTP 仅允许 localhost）')
 }
