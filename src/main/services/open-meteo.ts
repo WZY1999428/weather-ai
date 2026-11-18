@@ -10,16 +10,32 @@ import {
 
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
-const DEFAULT_TIMEOUT = 10000
+const DEFAULT_TIMEOUT = 6000
+const MAX_ATTEMPTS = 3
 
 export class OpenMeteoError extends Error {
-  constructor(message: string) {
+  constructor(
+    message: string,
+    readonly retryable = false
+  ) {
     super(message)
     this.name = 'OpenMeteoError'
   }
 }
 
+/** 超时、网络错误和 5xx 最多重试两次；取消和 4xx 不重试。 */
 async function getJSON<T>(url: URL, signal?: AbortSignal, timeoutMs = DEFAULT_TIMEOUT): Promise<T> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fetchJSON<T>(url, signal, timeoutMs)
+    } catch (err) {
+      if (!(err instanceof OpenMeteoError) || !err.retryable || attempt >= MAX_ATTEMPTS || signal?.aborted) throw err
+      await new Promise((r) => setTimeout(r, 500))
+    }
+  }
+}
+
+async function fetchJSON<T>(url: URL, signal: AbortSignal | undefined, timeoutMs: number): Promise<T> {
   const timeout = AbortSignal.timeout(timeoutMs)
   const combined = signal ? AbortSignal.any([signal, timeout]) : timeout
   let res: Response
@@ -27,12 +43,15 @@ async function getJSON<T>(url: URL, signal?: AbortSignal, timeoutMs = DEFAULT_TI
     res = await fetch(url, { signal: combined, headers: { Accept: 'application/json' } })
   } catch (err) {
     if (signal?.aborted) throw new OpenMeteoError('请求已取消')
-    if (timeout.aborted) throw new OpenMeteoError(`天气服务请求超时（${timeoutMs / 1000}s）`)
-    throw new OpenMeteoError(`无法连接天气服务：${(err as Error).message}`)
+    if (timeout.aborted) throw new OpenMeteoError(`天气服务请求超时（${timeoutMs / 1000}s）`, true)
+    throw new OpenMeteoError(`无法连接天气服务：${(err as Error).message}`, true)
   }
   const body = (await res.json().catch(() => null)) as (T & { error?: boolean; reason?: string }) | null
   if (!res.ok || !body || body.error) {
-    throw new OpenMeteoError(`天气服务返回错误（HTTP ${res.status}）${body?.reason ? `：${body.reason}` : ''}`)
+    throw new OpenMeteoError(
+      `天气服务返回错误（HTTP ${res.status}）${body?.reason ? `：${body.reason}` : ''}`,
+      res.status >= 500
+    )
   }
   return body
 }

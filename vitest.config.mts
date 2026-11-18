@@ -3,5 +3,5 @@ import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
   resolve: { alias: { '@shared': resolve('src/shared') } },
-  test: { include: ['tests/**/*.test.ts'], testTimeout: 30000, environment: 'node', pool: 'forks' }
+  test: { include: ['tests/**/*.test.ts'], testTimeout: 90000, environment: 'node', pool: 'forks' }
 })

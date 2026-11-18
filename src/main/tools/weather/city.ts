@@ -15,7 +15,7 @@ export const searchCityTool: ToolDefinition<{ city: string }, SearchCityResult> 
     required: ['city'],
     additionalProperties: false
   },
-  timeoutMs: 15000,
+  timeoutMs: 25000,
   async execute({ city }, { signal }) {
     const results = await searchCity(city, 5, signal)
     if (!results.length) throw new ToolError(`未找到城市“${city}”，请确认城市名称是否正确`)

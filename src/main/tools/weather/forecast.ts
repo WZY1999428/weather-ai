@@ -30,7 +30,7 @@ export function createCurrentWeatherTool(
       required: ['latitude', 'longitude'],
       additionalProperties: false
     },
-    timeoutMs: 15000,
+    timeoutMs: 25000,
     async execute({ latitude, longitude }, { signal }) {
       const location = resolveLocation(latitude, longitude)
       const data = await getCurrentWeather(latitude, longitude, getConfig().unit, signal)
@@ -55,7 +55,7 @@ export function createForecastTool(
       required: ['latitude', 'longitude'],
       additionalProperties: false
     },
-    timeoutMs: 15000,
+    timeoutMs: 25000,
     async execute({ latitude, longitude, days }, { signal }) {
       const location = resolveLocation(latitude, longitude)
       const cfg = getConfig()
