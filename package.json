@@ -1,0 +1,59 @@
+{
+  "name": "weather-ai",
+  "productName": "WeatherAI",
+  "version": "0.1.0",
+  "description": "桌面 AI 天气助手（DeepSeek Function Calling + Open-Meteo）",
+  "main": "./out/main/index.js",
+  "author": "WeatherAI",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "pnpm typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "vue-tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
+    "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron node_modules/vitest/vitest.mjs run",
+    "postinstall": "electron-builder install-app-deps",
+    "dist:win": "pnpm build && electron-builder --win nsis --x64",
+    "dist:dir": "pnpm build && electron-builder --dir"
+  },
+  "dependencies": {
+    "@electron-toolkit/preload": "^3.0.1",
+    "@electron-toolkit/utils": "^3.0.0",
+    "ajv": "^8.17.1",
+    "better-sqlite3": "^11.10.0",
+    "openai": "^4.104.0"
+  },
+  "devDependencies": {
+    "@electron-toolkit/tsconfig": "^1.0.1",
+    "@element-plus/icons-vue": "^2.3.1",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^20.17.0",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "cross-env": "^7.0.3",
+    "electron": "33.4.11",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "element-plus": "^2.9.11",
+    "highlight.js": "^11.11.1",
+    "markdown-it": "^14.1.0",
+    "pinia": "^2.3.1",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.21",
+    "vitest": "^2.1.9",
+    "vue": "^3.5.13",
+    "vue-tsc": "^2.2.12"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "better-sqlite3",
+      "esbuild",
+      "vue-demi"
+    ]
+  },
+  "packageManager": "pnpm@9.15.9"
+}
