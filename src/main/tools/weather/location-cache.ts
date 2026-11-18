@@ -18,11 +18,19 @@ export function rememberCities(cities: CityResult[]): void {
 }
 
 export function findCity(latitude: number, longitude: number): CityResult | undefined {
-  for (let i = cache.length - 1; i >= 0; i--) {
-    const c = cache[i]
-    if (Math.abs(c.latitude - latitude) <= TOLERANCE && Math.abs(c.longitude - longitude) <= TOLERANCE) return c
+  let best: CityResult | undefined
+  let bestDist = Infinity
+  for (const c of cache) {
+    const dLat = Math.abs(c.latitude - latitude)
+    const dLon = Math.abs(c.longitude - longitude)
+    if (dLat > TOLERANCE || dLon > TOLERANCE) continue
+    const dist = dLat * dLat + dLon * dLon
+    if (dist < bestDist) {
+      best = c
+      bestDist = dist
+    }
   }
-  return undefined
+  return best
 }
 
 export function toLabel(c: CityResult): LocationLabel {
