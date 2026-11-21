@@ -1,6 +1,6 @@
 import type { QWeatherCredentials, TemperatureUnit } from '@shared/types'
 import {
-  isNightIcon,
+  isDaytime,
   type CityResult,
   type CurrentWeatherResult,
   type DailyForecast,
@@ -152,7 +152,7 @@ export async function getCurrentWeather(
     apparentTemperature: toUnit(num(n.feelsLike), q.unit),
     weatherCode: icon,
     weather: n.text,
-    isDay: !isNightIcon(icon),
+    isDay: isDaytime(icon, n.obsTime),
     relativeHumidity: num(n.humidity),
     windSpeed: num(n.windSpeed),
     windSpeedUnit: 'km/h',
