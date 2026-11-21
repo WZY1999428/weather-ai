@@ -14,6 +14,7 @@ const tab = ref('ai')
 
 const ai = reactive({ apiKey: '', baseURL: '', model: '', temperature: 0.7, maxTokens: 2048, timeoutSec: 60 })
 const weather = reactive({ defaultCity: '', unit: 'celsius' as TemperatureUnit, forecastDays: 3 })
+const qweather = reactive({ apiKey: '', apiHost: '' })
 const appSettings = reactive({ autoLaunch: false, autoSave: true })
 const testing = ref(false)
 const testResult = ref<ConnectionTestResult | null>(null)
@@ -31,6 +32,7 @@ watch(
       timeoutSec: Math.round(c.ai.timeoutMs / 1000)
     })
     Object.assign(weather, c.weather)
+    qweather.apiHost = c.qweather.apiHost
     Object.assign(appSettings, c.app)
   },
   { immediate: true }
@@ -84,10 +86,24 @@ async function testConnection(): Promise<void> {
 
 async function saveWeather(): Promise<void> {
   try {
-    await settings.update({ weather: { ...weather } })
+    await settings.update({
+      weather: { ...weather },
+      qweather: { apiHost: qweather.apiHost, ...(qweather.apiKey.trim() ? { apiKey: qweather.apiKey.trim() } : {}) }
+    })
+    qweather.apiKey = ''
     ElMessage.success('天气设置已保存')
   } catch (err) {
     ElMessage.error(errorMessage(err))
+  }
+}
+
+async function clearQWeatherKey(): Promise<void> {
+  try {
+    await ElMessageBox.confirm('确定清除已保存的和风天气 API Key 吗？', '清除 API Key', { type: 'warning' })
+    await settings.update({ qweather: { apiKey: '' } })
+    ElMessage.success('和风天气 API Key 已清除')
+  } catch (err) {
+    if (err !== 'cancel' && err !== 'close') ElMessage.error(errorMessage(err))
   }
 }
 
@@ -168,6 +184,25 @@ async function clearHistory(): Promise<void> {
         <el-tab-pane label="天气" name="weather">
           <h3>天气设置</h3>
           <el-form label-width="120px" class="form">
+            <el-form-item label="和风 API Key">
+              <el-input
+                v-model="qweather.apiKey"
+                type="password"
+                show-password
+                autocomplete="off"
+                :placeholder="settings.config?.qweather.hasApiKey ? `已保存：${settings.config.qweather.apiKeyMasked}（留空则不修改）` : '请输入和风天气 API Key'"
+              />
+              <div class="hint">
+                在
+                <el-button link type="primary" size="small" @click="api.app.openExternal('https://console.qweather.com/')">和风天气控制台</el-button>
+                创建 API KEY 类型的凭据。仅保存在本机（系统可用时加密存储）。
+                <el-button v-if="settings.config?.qweather.hasApiKey" link type="danger" size="small" @click="clearQWeatherKey">清除</el-button>
+              </div>
+            </el-form-item>
+            <el-form-item label="API Host">
+              <el-input v-model="qweather.apiHost" placeholder="例如：abc1234xyz.def.qweatherapi.com（可留空）" />
+              <div class="hint">控制台「设置」中的专属 API Host。留空则使用公共域名 devapi / geoapi.qweather.com。</div>
+            </el-form-item>
             <el-form-item label="默认城市">
               <el-input v-model="weather.defaultCity" placeholder="例如：杭州" />
               <div class="hint">询问天气但未指定城市时使用。</div>
@@ -179,7 +214,7 @@ async function clearHistory(): Promise<void> {
               </el-radio-group>
             </el-form-item>
             <el-form-item label="默认预报天数">
-              <el-input-number v-model="weather.forecastDays" :min="1" :max="16" />
+              <el-input-number v-model="weather.forecastDays" :min="1" :max="15" />
             </el-form-item>
             <el-form-item>
               <el-button type="primary" @click="saveWeather">保存</el-button>
@@ -229,7 +264,7 @@ async function clearHistory(): Promise<void> {
             </el-descriptions>
             <p class="credit">
               天气数据来源
-              <el-button link type="primary" @click="api.app.openExternal('https://open-meteo.com/')">Open-Meteo</el-button>
+              <el-button link type="primary" @click="api.app.openExternal('https://www.qweather.com/')">和风天气</el-button>
               · AI 模型
               <el-button link type="primary" @click="api.app.openExternal('https://platform.deepseek.com/')">DeepSeek</el-button>
             </p>

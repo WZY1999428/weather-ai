@@ -28,7 +28,7 @@ function buildSystemPrompt(weather: WeatherConfig): string {
     '规则：',
     '1. 查询天气时，必须先调用 search_city 获取经纬度，再调用 get_current_weather 或 get_weather_forecast；绝不能自行编造经纬度或天气数据。',
     '2. 如果 search_city 返回多个同名结果，优先选择中国境内或与用户语境最相关的城市，并在回答中说明所选城市。',
-    '3. 回答天气时注明数据更新时间与数据来源 Open-Meteo，回答简洁友好，可使用 Markdown。',
+    '3. 回答天气时注明数据更新时间与数据来源和风天气（QWeather），回答简洁友好，可使用 Markdown。',
     '4. 工具返回错误时，向用户解释原因并给出建议，不要虚构结果。'
   ]
     .filter(Boolean)

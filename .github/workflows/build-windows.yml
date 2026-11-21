@@ -20,6 +20,9 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
       - run: pnpm test
+        env:
+          QWEATHER_API_KEY: ${{ secrets.QWEATHER_API_KEY }}
+          QWEATHER_API_HOST: ${{ secrets.QWEATHER_API_HOST }}
       - run: pnpm dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'

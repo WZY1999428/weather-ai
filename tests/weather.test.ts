@@ -3,10 +3,14 @@ import { createToolRegistry } from '../src/main/tools'
 import { clearCityCache } from '../src/main/tools/weather/location-cache'
 import type { SearchCityResult, CurrentWeatherResult, ForecastResult } from '@shared/weather'
 
-const registry = createToolRegistry({ getWeatherConfig: () => ({ defaultCity: '杭州', unit: 'celsius', forecastDays: 3 }) })
+const apiKey = process.env.QWEATHER_API_KEY ?? ''
+const registry = createToolRegistry({
+  getWeatherConfig: () => ({ defaultCity: '杭州', unit: 'celsius', forecastDays: 3 }),
+  getQWeather: () => ({ apiKey, apiHost: process.env.QWEATHER_API_HOST ?? '' })
+})
 const ctx = () => ({ signal: new AbortController().signal })
 
-describe('weather tools (real Open-Meteo API)', () => {
+describe.skipIf(!apiKey)('weather tools (real QWeather API, needs QWEATHER_API_KEY)', () => {
   beforeEach(() => clearCityCache())
 
   it('search_city resolves Chinese city names', async () => {
@@ -37,9 +41,10 @@ describe('weather tools (real Open-Meteo API)', () => {
     expect(fc.days).toHaveLength(5)
     expect(fc.days[0]).toHaveProperty('sunrise')
     expect(fc.days[0].temperatureMax).toBeGreaterThanOrEqual(fc.days[0].temperatureMin)
+    expect(fc.days[0].weather).toBeTruthy()
   })
 
   it('errors on unknown city', async () => {
-    await expect(registry.get('search_city')!.execute({ city: 'zzzxqqyy不存在的城市' }, ctx())).rejects.toThrow(/未找到/)
+    await expect(registry.get('search_city')!.execute({ city: 'qqqqxxxxzzzz' }, ctx())).rejects.toThrow(/未找到/)
   })
 })

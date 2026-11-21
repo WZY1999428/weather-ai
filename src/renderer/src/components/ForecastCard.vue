@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { ForecastResult } from '@shared/weather'
-import { unitSymbol, weatherCodeIcon } from '@shared/weather'
+import { sourceLabel, unitSymbol, weatherCodeIcon } from '@shared/weather'
 
 const props = defineProps<{ data: ForecastResult }>()
 const u = computed(() => unitSymbol(props.data.unit))
@@ -27,7 +27,7 @@ const time = (iso: string): string => iso.split('T')[1] ?? iso
   <div class="forecast-card">
     <div class="header">
       <span class="title">{{ place }} · 未来 {{ data.days.length }} 天预报</span>
-      <span class="sub">获取于 {{ new Date(data.fetchedAt).toLocaleString('zh-CN', { hour12: false }) }} · Open-Meteo</span>
+      <span class="sub">获取于 {{ new Date(data.fetchedAt).toLocaleString('zh-CN', { hour12: false }) }} · {{ sourceLabel(data.source) }}</span>
     </div>
     <div class="days">
       <div v-for="d in data.days" :key="d.date" class="day">
@@ -39,7 +39,7 @@ const time = (iso: string): string => iso.split('T')[1] ?? iso
           <span class="max">{{ Math.round(d.temperatureMax) }}{{ u }}</span>
           <span class="min">{{ Math.round(d.temperatureMin) }}{{ u }}</span>
         </div>
-        <div class="meta">💧 {{ d.precipitationProbabilityMax ?? '-' }}% · {{ d.precipitationSum }}mm</div>
+        <div class="meta">💧 <template v-if="d.precipitationProbabilityMax !== null">{{ d.precipitationProbabilityMax }}% · </template>{{ d.precipitationSum }}mm</div>
         <div class="meta">💨 {{ d.windSpeedMax }} {{ data.windSpeedUnit }}</div>
         <div class="meta">🌅 {{ time(d.sunrise) }} 🌇 {{ time(d.sunset) }}</div>
       </div>

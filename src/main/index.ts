@@ -85,7 +85,7 @@ if (!app.requestSingleInstanceLock()) {
     db = openDatabase(join(app.getPath('userData'), 'weather-ai.db'))
     conversations = new ConversationManager(db)
     const cfg = config
-    const registry = createToolRegistry({ getWeatherConfig: () => cfg.getWeather() })
+    const registry = createToolRegistry({ getWeatherConfig: () => cfg.getWeather(), getQWeather: () => cfg.getQWeather() })
     const ai = new DeepSeekClient(
       () => cfg.getAI(),
       () => cfg.getApiKey()

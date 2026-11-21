@@ -1,11 +1,17 @@
 import { app, safeStorage } from 'electron'
 import { existsSync, mkdirSync, readFileSync, writeFileSync, renameSync } from 'fs'
 import { dirname, join } from 'path'
-import type { AIConfig, AppSettings, ConfigUpdate, PublicConfig, WeatherConfig } from '@shared/types'
+import type { AIConfig, AppSettings, ConfigUpdate, PublicConfig, QWeatherCredentials, WeatherConfig } from '@shared/types'
+
+interface StoredSecret {
+  apiKeyEnc?: string
+  apiKeyPlain?: string
+}
 
 interface StoredConfig {
-  ai: AIConfig & { apiKeyEnc?: string; apiKeyPlain?: string }
+  ai: AIConfig & StoredSecret
   weather: WeatherConfig
+  qweather: { apiHost: string } & StoredSecret
   app: AppSettings
 }
 
@@ -18,6 +24,7 @@ export const DEFAULT_CONFIG: StoredConfig = {
     timeoutMs: 60000
   },
   weather: { defaultCity: '杭州', unit: 'celsius', forecastDays: 3 },
+  qweather: { apiHost: '' },
   app: { autoLaunch: false, autoSave: true }
 }
 
@@ -40,6 +47,7 @@ export class ConfigManager {
         return {
           ai: { ...DEFAULT_CONFIG.ai, ...raw.ai },
           weather: { ...DEFAULT_CONFIG.weather, ...raw.weather },
+          qweather: { ...DEFAULT_CONFIG.qweather, ...raw.qweather },
           app: { ...DEFAULT_CONFIG.app, ...raw.app }
         }
       }
@@ -57,28 +65,11 @@ export class ConfigManager {
   }
 
   getApiKey(): string {
-    const { apiKeyEnc, apiKeyPlain } = this.config.ai
-    if (apiKeyEnc) {
-      try {
-        return safeStorage.decryptString(Buffer.from(apiKeyEnc, 'base64'))
-      } catch (err) {
-        console.error('[config] failed to decrypt api key', err)
-        return ''
-      }
-    }
-    return apiKeyPlain ?? ''
+    return readSecret(this.config.ai)
   }
 
-  private setApiKey(key: string): void {
-    delete this.config.ai.apiKeyEnc
-    delete this.config.ai.apiKeyPlain
-    const trimmed = key.trim()
-    if (!trimmed) return
-    if (safeStorage.isEncryptionAvailable()) {
-      this.config.ai.apiKeyEnc = safeStorage.encryptString(trimmed).toString('base64')
-    } else {
-      this.config.ai.apiKeyPlain = trimmed
-    }
+  getQWeather(): QWeatherCredentials {
+    return { apiKey: readSecret(this.config.qweather), apiHost: this.config.qweather.apiHost }
   }
 
   getAI(): AIConfig {
@@ -96,6 +87,7 @@ export class ConfigManager {
 
   getPublic(): PublicConfig {
     const key = this.getApiKey()
+    const qweatherKey = readSecret(this.config.qweather)
     return {
       ai: {
         ...this.getAI(),
@@ -103,6 +95,11 @@ export class ConfigManager {
         apiKeyMasked: maskKey(key)
       },
       weather: this.getWeather(),
+      qweather: {
+        apiHost: this.config.qweather.apiHost,
+        hasApiKey: qweatherKey.length > 0,
+        apiKeyMasked: maskKey(qweatherKey)
+      },
       app: this.getApp()
     }
   }
@@ -120,16 +117,22 @@ export class ConfigManager {
   }
 
   update(update: ConfigUpdate): PublicConfig {
+    const apiHost = typeof update.qweather?.apiHost === 'string' ? validateApiHost(update.qweather.apiHost) : undefined
     if (update.ai) {
       const { apiKey, ...rest } = update.ai
       Object.assign(this.config.ai, ConfigManager.mergeAI(this.getAI(), rest))
-      if (typeof apiKey === 'string') this.setApiKey(apiKey)
+      if (typeof apiKey === 'string') writeSecret(this.config.ai, apiKey)
     }
     if (update.weather) {
       const w = update.weather
       if (typeof w.defaultCity === 'string') this.config.weather.defaultCity = w.defaultCity.trim()
       if (w.unit === 'celsius' || w.unit === 'fahrenheit') this.config.weather.unit = w.unit
-      if (typeof w.forecastDays === 'number') this.config.weather.forecastDays = Math.round(clamp(w.forecastDays, 1, 16))
+      if (typeof w.forecastDays === 'number') this.config.weather.forecastDays = Math.round(clamp(w.forecastDays, 1, 15))
+    }
+    if (update.qweather) {
+      const { apiKey } = update.qweather
+      if (apiHost !== undefined) this.config.qweather.apiHost = apiHost
+      if (typeof apiKey === 'string') writeSecret(this.config.qweather, apiKey)
     }
     if (update.app) {
       if (typeof update.app.autoLaunch === 'boolean') this.config.app.autoLaunch = update.app.autoLaunch
@@ -138,6 +141,40 @@ export class ConfigManager {
     this.save()
     return this.getPublic()
   }
+}
+
+function readSecret(s: StoredSecret): string {
+  if (s.apiKeyEnc) {
+    try {
+      return safeStorage.decryptString(Buffer.from(s.apiKeyEnc, 'base64'))
+    } catch (err) {
+      console.error('[config] failed to decrypt api key', err)
+      return ''
+    }
+  }
+  return s.apiKeyPlain ?? ''
+}
+
+function writeSecret(s: StoredSecret, key: string): void {
+  delete s.apiKeyEnc
+  delete s.apiKeyPlain
+  const trimmed = key.trim()
+  if (!trimmed) return
+  if (safeStorage.isEncryptionAvailable()) {
+    s.apiKeyEnc = safeStorage.encryptString(trimmed).toString('base64')
+  } else {
+    s.apiKeyPlain = trimmed
+  }
+}
+
+/** 接受 "abc.qweatherapi.com" 或 "https://abc.qweatherapi.com/"，统一保存为主机名 */
+function validateApiHost(input: string): string {
+  const value = input.trim().replace(/^https:\/\//i, '').replace(/\/+$/, '')
+  if (!value) return ''
+  if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/i.test(value)) {
+    throw new Error('API Host 格式无效，应形如 abc1234xyz.def.qweatherapi.com')
+  }
+  return value.toLowerCase()
 }
 
 function maskKey(key: string): string {

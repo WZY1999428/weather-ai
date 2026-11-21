@@ -59,6 +59,12 @@ export interface WeatherConfig {
   forecastDays: number
 }
 
+/** 和风天气凭据：apiHost 为控制台中的专属 API Host，留空使用公共域名 */
+export interface QWeatherCredentials {
+  apiKey: string
+  apiHost: string
+}
+
 export interface AppSettings {
   autoLaunch: boolean
   autoSave: boolean
@@ -68,12 +74,14 @@ export interface AppSettings {
 export interface PublicConfig {
   ai: AIConfig & { hasApiKey: boolean; apiKeyMasked: string }
   weather: WeatherConfig
+  qweather: { apiHost: string; hasApiKey: boolean; apiKeyMasked: string }
   app: AppSettings
 }
 
 export interface ConfigUpdate {
   ai?: Partial<AIConfig> & { apiKey?: string }
   weather?: Partial<WeatherConfig>
+  qweather?: Partial<QWeatherCredentials>
   app?: Partial<AppSettings>
 }
 
