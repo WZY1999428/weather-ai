@@ -117,6 +117,7 @@ export class ConfigManager {
   }
 
   update(update: ConfigUpdate): PublicConfig {
+    const apiHost = typeof update.qweather?.apiHost === 'string' ? validateApiHost(update.qweather.apiHost) : undefined
     if (update.ai) {
       const { apiKey, ...rest } = update.ai
       Object.assign(this.config.ai, ConfigManager.mergeAI(this.getAI(), rest))
@@ -129,8 +130,8 @@ export class ConfigManager {
       if (typeof w.forecastDays === 'number') this.config.weather.forecastDays = Math.round(clamp(w.forecastDays, 1, 15))
     }
     if (update.qweather) {
-      const { apiKey, apiHost } = update.qweather
-      if (typeof apiHost === 'string') this.config.qweather.apiHost = validateApiHost(apiHost)
+      const { apiKey } = update.qweather
+      if (apiHost !== undefined) this.config.qweather.apiHost = apiHost
       if (typeof apiKey === 'string') writeSecret(this.config.qweather, apiKey)
     }
     if (update.app) {
