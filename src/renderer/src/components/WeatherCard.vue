@@ -20,7 +20,7 @@ const region = computed(() => [props.data.location?.admin1, props.data.location?
         <div class="city">{{ place }}</div>
         <div class="region">{{ region }}</div>
       </div>
-      <div class="icon">{{ weatherCodeIcon(data.weatherCode, data.isDay) }}</div>
+      <div class="icon">{{ weatherCodeIcon(data.weatherCode) }}</div>
     </div>
     <div class="main">
       <span class="temp">{{ Math.round(data.temperature) }}</span><span class="unit">{{ u }}</span>
@@ -33,7 +33,7 @@ const region = computed(() => [props.data.location?.admin1, props.data.location?
       <div><span class="k">风向</span><span class="v">{{ data.windDirectionText }}</span></div>
       <div><span class="k">降水</span><span class="v">{{ data.precipitation }} mm</span></div>
     </div>
-    <div class="foot">更新时间 {{ data.updateTime.replace('T', ' ') }}（{{ data.timezone }}）· 数据来源 Open-Meteo</div>
+    <div class="foot">更新时间 {{ data.updateTime.replace('T', ' ') }}（{{ data.timezone }}）· 数据来源 和风天气</div>
   </div>
 </template>
 

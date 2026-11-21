@@ -11,7 +11,7 @@ import type { AgentEvent } from '@shared/types'
 
 /**
  * 本地 OpenAI 兼容的假模型服务，用于验证 Agent 工具调用循环；
- * 天气数据仍然来自真实 Open-Meteo API。
+ * 天气数据仍然来自真实和风天气 API（需要 QWEATHER_API_KEY）。
  */
 type Script = (body: any) => { content?: string; toolCalls?: Array<{ name: string; args: object }>; delayMs?: number }
 let script: Script
@@ -63,12 +63,14 @@ beforeAll(async () => {
 
 afterAll(() => server.close())
 
+const qweather = () => ({ apiKey: process.env.QWEATHER_API_KEY ?? '', apiHost: process.env.QWEATHER_API_HOST ?? '' })
+
 function setup() {
   const db = new Database(':memory:')
   runMigrations(db)
   const conversations = new ConversationManager(db)
   const weatherCfg = () => ({ defaultCity: '杭州', unit: 'celsius' as const, forecastDays: 3 })
-  const registry = createToolRegistry({ getWeatherConfig: weatherCfg })
+  const registry = createToolRegistry({ getWeatherConfig: weatherCfg, getQWeather: qweather })
   const ai = new DeepSeekClient(
     () => ({ baseURL, model: 'deepseek-chat', temperature: 0.7, maxTokens: 1024, timeoutMs: 20000 }),
     () => 'test-key'
@@ -78,7 +80,7 @@ function setup() {
 }
 
 describe('AgentManager', () => {
-  it('runs multi-round, multi-tool calling with real weather data and restores history', async () => {
+  it.skipIf(!qweather().apiKey)('runs multi-round, multi-tool calling with real weather data and restores history', async () => {
     requests.length = 0
     script = (body) => {
       const toolMsgs = body.messages.filter((m: any) => m.role === 'tool')
@@ -155,7 +157,10 @@ describe('AgentManager', () => {
   it('reports API errors without throwing', async () => {
     const { conversations } = setup()
     const conv = conversations.create()
-    const registry = createToolRegistry({ getWeatherConfig: () => ({ defaultCity: '', unit: 'celsius', forecastDays: 3 }) })
+    const registry = createToolRegistry({
+      getWeatherConfig: () => ({ defaultCity: '', unit: 'celsius', forecastDays: 3 }),
+      getQWeather: qweather
+    })
     const ai = new DeepSeekClient(
       () => ({ baseURL, model: 'm', temperature: 1, maxTokens: 10, timeoutMs: 5000 }),
       () => ''

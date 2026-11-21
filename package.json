@@ -2,7 +2,7 @@
   "name": "weather-ai",
   "productName": "WeatherAI",
   "version": "0.1.0",
-  "description": "桌面 AI 天气助手（DeepSeek Function Calling + Open-Meteo）",
+  "description": "桌面 AI 天气助手（DeepSeek Function Calling + 和风天气）",
   "main": "./out/main/index.js",
   "author": "WeatherAI",
   "license": "MIT",

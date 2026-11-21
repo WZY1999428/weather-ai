@@ -1,6 +1,6 @@
 # WeatherAI — 桌面 AI 天气助手
 
-基于 **Electron + Vue 3 + TypeScript** 的桌面 AI 助手。使用 **DeepSeek API**（OpenAI 兼容格式）的 Function Calling，让模型自主决定何时调用本地注册的工具。第一阶段内置 Open-Meteo 天气工具（城市搜索、实时天气、多日预报）。不使用 MCP。
+基于 **Electron + Vue 3 + TypeScript** 的桌面 AI 助手。使用 **DeepSeek API**（OpenAI 兼容格式）的 Function Calling，让模型自主决定何时调用本地注册的工具。第一阶段内置和风天气（QWeather）天气工具（城市搜索、实时天气、多日预报）。不使用 MCP。
 
 ## 功能
 
@@ -8,7 +8,7 @@
 - 通用 `ToolRegistry` + `AgentManager`：一次响应多个工具调用、连续多轮调用、最大轮数限制（8）、AJV Schema 校验、`tool_call_id` 关联、执行状态与耗时记录、取消请求
 - 天气工具：`search_city` / `get_current_weather` / `get_weather_forecast`（坐标必须来自 `search_city` 结果，模型无法编造）
 - 聊天界面：会话列表（新建/重命名/删除）、Markdown 与代码高亮、复制、消息时间、工具调用卡片（Waiting / Running / Success / Failed）、右侧工具详情面板、实时天气卡片、多日预报卡片
-- 设置页：API Key、Base URL、模型、Temperature、Max Tokens、超时、默认城市、温度单位、预报天数、开机启动、自动保存、清空历史、关于
+- 设置页：API Key、Base URL、模型、Temperature、Max Tokens、超时、和风天气 API Key / API Host、默认城市、温度单位、预报天数、开机启动、自动保存、清空历史、关于
 - SQLite（better-sqlite3）持久化，重启后恢复完整对话（包括工具调用与结果）
 
 ## 架构
@@ -18,7 +18,7 @@ src/
 ├── main/                     # 主进程：所有网络请求、工具执行、存储
 │   ├── ai/                   # deepseek.ts / agent-manager.ts / conversation-manager.ts
 │   ├── tools/                # types.ts / registry.ts / weather/*
-│   ├── services/open-meteo.ts
+│   ├── services/qweather.ts
 │   ├── database/             # SQLite 连接 + migrations
 │   ├── config/               # 配置（API Key 用 safeStorage 加密）
 │   ├── ipc/                  # 带参数校验的 IPC 处理
@@ -46,12 +46,12 @@ src/
 pnpm install          # 安装依赖，并为 Electron 重编译 better-sqlite3
 pnpm dev              # 启动开发模式（热更新）
 pnpm typecheck        # 主进程 + Renderer 类型检查
-pnpm test             # 单元/集成测试（会真实请求 Open-Meteo，需要联网）
+pnpm test             # 单元/集成测试（天气相关用例需设置环境变量 QWEATHER_API_KEY，可选 QWEATHER_API_HOST；未设置时跳过）
 pnpm build            # 类型检查 + 生产构建到 out/
 pnpm preview          # 预览生产构建
 ```
 
-首次启动后进入「设置」填写 DeepSeek API Key（https://platform.deepseek.com/api_keys），点击「测试连接」。默认模型 `deepseek-chat`，Base URL `https://api.deepseek.com`。
+首次启动后进入「设置」填写 DeepSeek API Key（https://platform.deepseek.com/api_keys），点击「测试连接」；再在「设置 → 天气」填写和风天气 API Key。默认模型 `deepseek-chat`，Base URL `https://api.deepseek.com`。
 
 ## 打包
 
@@ -81,4 +81,9 @@ pnpm dist:dir         # 当前平台的免安装目录（调试用）
 
 ## 天气数据
 
-来自 [Open-Meteo](https://open-meteo.com/)（无需 API Key），天气卡片只展示真实 API 返回数据，并标注更新时间。
+来自 [和风天气 QWeather](https://dev.qweather.com/docs/configuration/)，天气卡片只展示真实 API 返回数据，并标注更新时间。
+
+- 在 [和风天气控制台](https://console.qweather.com/) 创建 **API KEY** 类型凭据，填入「设置 → 天气 → 和风 API Key」（请求头 `X-QW-Api-Key`）。
+- 「API Host」填写控制台中的专属 API Host（如 `abc1234xyz.def.qweatherapi.com`）；留空则使用公共域名 `geoapi.qweather.com` / `devapi.qweather.com`。
+- 预报接口为 3/7/10/15 天档位，最多 15 天；和风天气每日预报不提供降水概率，卡片只显示降水量。
+- CI 中通过仓库 Secret `QWEATHER_API_KEY`（可选 `QWEATHER_API_HOST`）运行真实天气测试。

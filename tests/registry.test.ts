@@ -3,10 +3,11 @@ import { ToolRegistry } from '../src/main/tools/registry'
 import { createToolRegistry } from '../src/main/tools'
 
 const cfg = () => ({ defaultCity: '杭州', unit: 'celsius' as const, forecastDays: 3 })
+const creds = () => ({ apiKey: '', apiHost: '' })
 
 describe('ToolRegistry', () => {
   it('registers weather tools and converts to function-calling format', () => {
-    const r = createToolRegistry({ getWeatherConfig: cfg })
+    const r = createToolRegistry({ getWeatherConfig: cfg, getQWeather: creds })
     const tools = r.toFunctionTools()
     expect(tools.map((t) => t.function.name).sort()).toEqual(['get_current_weather', 'get_weather_forecast', 'search_city'])
     expect(tools.every((t) => t.type === 'function' && typeof t.function.parameters === 'object')).toBe(true)
@@ -23,7 +24,7 @@ describe('ToolRegistry', () => {
   })
 
   it('validates args against JSON schema', () => {
-    const r = createToolRegistry({ getWeatherConfig: cfg })
+    const r = createToolRegistry({ getWeatherConfig: cfg, getQWeather: creds })
     expect(r.validateArgs('nope', '{}')).toMatchObject({ ok: false, error: expect.stringMatching(/未注册/) })
     expect(r.validateArgs('search_city', 'not json')).toMatchObject({ ok: false })
     expect(r.validateArgs('search_city', '{}')).toMatchObject({ ok: false })

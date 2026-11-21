@@ -1,10 +1,10 @@
 import type { TemperatureUnit } from './types'
 
 export interface CityResult {
-  id: number
+  /** 和风天气 LocationID */
+  id: string
   name: string
   country: string
-  countryCode: string
   admin1: string
   admin2: string
   latitude: number
@@ -43,7 +43,7 @@ export interface CurrentWeatherResult {
   /** 观测时间（当地时间，ISO） */
   updateTime: string
   fetchedAt: string
-  source: 'Open-Meteo'
+  source: 'QWeather'
 }
 
 export interface DailyForecast {
@@ -68,52 +68,33 @@ export interface ForecastResult {
   windSpeedUnit: string
   days: DailyForecast[]
   fetchedAt: string
-  source: 'Open-Meteo'
+  source: 'QWeather'
 }
 
-const CODES: Record<number, [string, string]> = {
-  0: ['晴', '☀️'],
-  1: ['大部晴朗', '🌤️'],
-  2: ['多云', '⛅'],
-  3: ['阴', '☁️'],
-  45: ['雾', '🌫️'],
-  48: ['冻雾', '🌫️'],
-  51: ['小毛毛雨', '🌦️'],
-  53: ['毛毛雨', '🌦️'],
-  55: ['大毛毛雨', '🌧️'],
-  56: ['轻度冻毛毛雨', '🌧️'],
-  57: ['强冻毛毛雨', '🌧️'],
-  61: ['小雨', '🌦️'],
-  63: ['中雨', '🌧️'],
-  65: ['大雨', '🌧️'],
-  66: ['轻度冻雨', '🌧️'],
-  67: ['强冻雨', '🌧️'],
-  71: ['小雪', '🌨️'],
-  73: ['中雪', '🌨️'],
-  75: ['大雪', '❄️'],
-  77: ['雪粒', '🌨️'],
-  80: ['小阵雨', '🌦️'],
-  81: ['中阵雨', '🌧️'],
-  82: ['强阵雨', '⛈️'],
-  85: ['小阵雪', '🌨️'],
-  86: ['大阵雪', '❄️'],
-  95: ['雷暴', '⛈️'],
-  96: ['雷暴伴小冰雹', '⛈️'],
-  99: ['雷暴伴大冰雹', '⛈️']
+/** 和风天气图标代码：https://dev.qweather.com/docs/resource/icons/ */
+const NIGHT_ICONS = new Set([150, 151, 152, 153, 350, 351, 456, 457])
+
+export function isNightIcon(code: number): boolean {
+  return NIGHT_ICONS.has(code)
 }
 
-export function weatherCodeText(code: number): string {
-  return CODES[code]?.[0] ?? `未知天气(${code})`
-}
-
-export function weatherCodeIcon(code: number, isDay = true): string {
-  if (!isDay && (code === 0 || code === 1)) return '🌙'
-  return CODES[code]?.[1] ?? '🌡️'
-}
-
-export function windDirectionText(deg: number): string {
-  const dirs = ['北风', '东北风', '东风', '东南风', '南风', '西南风', '西风', '西北风']
-  return dirs[Math.round((((deg % 360) + 360) % 360) / 45) % 8]
+export function weatherCodeIcon(code: number): string {
+  if (code === 100) return '☀️'
+  if (code === 101) return '⛅'
+  if (code === 102 || code === 103) return '🌤️'
+  if (code === 104) return '☁️'
+  if (code === 150 || code === 152 || code === 153) return '🌙'
+  if (code === 151) return '☁️'
+  if (code === 300 || code === 350) return '🌦️'
+  if (code >= 302 && code <= 304) return '⛈️'
+  if (code >= 300 && code < 400) return '🌧️'
+  if (code === 402 || code === 403 || code === 410) return '❄️'
+  if (code >= 400 && code < 500) return '🌨️'
+  if (code >= 503 && code <= 508) return '🌪️'
+  if (code >= 500 && code < 600) return '🌫️'
+  if (code === 900) return '🔥'
+  if (code === 901) return '🥶'
+  return '🌡️'
 }
 
 export const unitSymbol = (unit: TemperatureUnit): string => (unit === 'fahrenheit' ? '°F' : '°C')
