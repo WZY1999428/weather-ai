@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CurrentWeatherResult } from '@shared/weather'
-import { unitSymbol, weatherCodeIcon } from '@shared/weather'
+import { sourceLabel, unitSymbol, weatherCodeIcon } from '@shared/weather'
 
 const props = defineProps<{ data: CurrentWeatherResult }>()
 const u = computed(() => unitSymbol(props.data.unit))
@@ -33,7 +33,7 @@ const region = computed(() => [props.data.location?.admin1, props.data.location?
       <div><span class="k">风向</span><span class="v">{{ data.windDirectionText }}</span></div>
       <div><span class="k">降水</span><span class="v">{{ data.precipitation }} mm</span></div>
     </div>
-    <div class="foot">更新时间 {{ data.updateTime.replace('T', ' ') }}（{{ data.timezone }}）· 数据来源 和风天气</div>
+    <div class="foot">更新时间 {{ data.updateTime.replace('T', ' ') }}（{{ data.timezone }}）· 数据来源 {{ sourceLabel(data.source) }}</div>
   </div>
 </template>
 

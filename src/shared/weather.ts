@@ -43,7 +43,7 @@ export interface CurrentWeatherResult {
   /** 观测时间（当地时间，ISO） */
   updateTime: string
   fetchedAt: string
-  source: 'QWeather'
+  source: WeatherSource
 }
 
 export interface DailyForecast {
@@ -68,7 +68,7 @@ export interface ForecastResult {
   windSpeedUnit: string
   days: DailyForecast[]
   fetchedAt: string
-  source: 'QWeather'
+  source: WeatherSource
 }
 
 /** 和风天气图标代码：https://dev.qweather.com/docs/resource/icons/ */
@@ -101,5 +101,10 @@ export function weatherCodeIcon(code: number): string {
   if (code === 901) return '🥶'
   return '🌡️'
 }
+
+export type WeatherSource = 'QWeather' | 'Open-Meteo'
+
+/** 历史对话中可能保存着迁移前 Open-Meteo 的结果 */
+export const sourceLabel = (source: WeatherSource): string => (source === 'Open-Meteo' ? 'Open-Meteo' : '和风天气')
 
 export const unitSymbol = (unit: TemperatureUnit): string => (unit === 'fahrenheit' ? '°F' : '°C')
